@@ -16,45 +16,48 @@ import cv2
 import numpy as np
 import pyautogui
 import time
+import sys  # Import sys for using sys.exit()
 
-def find_image(image_path, threshold=0.8):
-    # Load the template image
-    template = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-    w, h = template.shape[::-1]
-    
+def find_image(image_path, threshold=0.3):
+    # Load the template image in color
+    template = cv2.imread(image_path)
+    template = cv2.cvtColor(template, cv2.COLOR_BGR2RGB)  # Convert to RGB
+    w, h = template.shape[1], template.shape[0]
+
     while True:
         # Capture the screen
         screenshot = pyautogui.screenshot()
         screen = np.array(screenshot)
-        screen_gray = cv2.cvtColor(screen, cv2.COLOR_BGR2GRAY)
-        
+        screen = cv2.cvtColor(screen, cv2.COLOR_BGR2RGB)  # Convert to RGB
+
         # Perform template matching 
-        res = cv2.matchTemplate(screen_gray, template, cv2.TM_CCOEFF_NORMED)
+        res = cv2.matchTemplate(screen, template, cv2.TM_CCOEFF_NORMED)
         loc = np.where(res >= threshold)
         
         # Check if the image is found 
+        found = False
         for pt in zip(*loc[::-1]):
-            # Image found - you can add additional actions here
-            print("Image found on screen")
             cv2.rectangle(screen, pt, (pt[0] + w, pt[1] + h), (0, 255, 0), 2)
-            cv2.imshow('Detected', screen)
-            
-            # Break the loop or return if you only need to find it once
-            return
+            found = True
         
-        # Display the result (for testing)
-        cv2.imshow('Screen', screen_gray)
+        if found:
+            print("Image found on screen")
+            # Removed the cv2.waitKey(0) to not wait for a key press
+            cv2.imshow('Detected', screen)
+            cv2.waitKey(1)  # Display the window just for a short moment
+            cv2.destroyAllWindows()  # Close all OpenCV windows
+            sys.exit()  # Exit the script
+
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-        
-        time.sleep(0.5) # add delay in each check (in seconds)
-        
-    cv2.destroyAllWindows()
-    
+
+        time.sleep(0.5)
+
 # Path to the image you are looking for
-image_path = ('Images\\Luis.jpg')
-print (image_path)
+image_path = 'Images\\Luis.jpg'
 find_image(image_path)
+
+
 
         
             
